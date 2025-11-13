@@ -1,0 +1,164 @@
+graph TB
+    subgraph "Client Layer - User Devices"
+        A1[Web Browser<br/>Chrome/Firefox/Safari]
+        A2[Mobile PWA<br/>iOS/Android]
+        A3[Admin Dashboard<br/>Web Interface]
+    end
+
+    subgraph "Frontend - React Application"
+        B1[React Components<br/>UI Layer]
+        B2[State Management<br/>React Query + Zustand]
+        B3[Socket.io Client<br/>Real-time Events]
+        B4[Axios HTTP Client<br/>API Calls]
+        B5[Google Maps<br/>Integration]
+    end
+
+    subgraph "API Gateway - Express Server"
+        C1[Authentication<br/>Middleware]
+        C2[Rate Limiting<br/>Middleware]
+        C3[REST API Routes<br/>Controllers]
+        C4[Socket.io Server<br/>WebSocket Handler]
+        C5[Error Handler<br/>Middleware]
+    end
+
+    subgraph "Business Logic Layer - Services"
+        D1[Auth Service<br/>Login/Register/OTP]
+        D2[Ride Service<br/>CRUD/Search]
+        D3[Booking Service<br/>Request/Confirm]
+        D4[Chat Service<br/>Messages]
+        D5[Payment Service<br/>Cash Tracking]
+        D6[Notification Service<br/>Push/SMS/Email]
+        D7[Review Service<br/>Ratings]
+        D8[Admin Service<br/>Management]
+    end
+
+    subgraph "Data Access Layer - Mongoose ODM"
+        E1[User Model]
+        E2[Ride Model]
+        E3[Booking Model]
+        E4[Message Model]
+        E5[Review Model]
+        E6[Notification Model]
+        E7[Report Model]
+        E8[RecurringSchedule Model]
+    end
+
+    subgraph "Database - MongoDB Atlas"
+        F1[(Users Collection<br/>10K docs)]
+        F2[(Rides Collection<br/>50K docs)]
+        F3[(Bookings Collection<br/>100K docs)]
+        F4[(Messages Collection<br/>500K docs)]
+        F5[(Reviews Collection<br/>80K docs)]
+        F6[(Notifications Collection<br/>200K docs)]
+        F7[(Reports Collection<br/>500 docs)]
+        F8[(RecurringSchedules<br/>5K docs)]
+    end
+
+    subgraph "External Services"
+        G1[Google Maps API<br/>Routes/Directions]
+        G2[Twilio SMS<br/>OTP/Notifications]
+        G3[SendGrid Email<br/>Verification]
+        G4[Cloudinary<br/>Image Storage]
+        G5[Sentry<br/>Error Tracking]
+    end
+
+    subgraph "Background Jobs"
+        H1[Node-Cron<br/>Scheduler]
+        H2[Generate Recurring Rides<br/>Daily at Midnight]
+        H3[Cleanup Old Data<br/>Weekly]
+        H4[Send Ride Reminders<br/>1 Hour Before]
+    end
+
+    subgraph "Hosting Infrastructure"
+        I1[Vercel<br/>Frontend CDN]
+        I2[Railway/Render<br/>Backend Server]
+        I3[MongoDB Atlas<br/>Database Cloud]
+    end
+
+    %% Client to Frontend
+    A1 --> B1
+    A2 --> B1
+    A3 --> B1
+
+    %% Frontend Internal
+    B1 --> B2
+    B1 --> B4
+    B2 --> B3
+    B2 --> B5
+
+    %% Frontend to Backend
+    B4 -->|HTTPS REST| C3
+    B3 -->|WSS| C4
+
+    %% API Gateway Flow
+    C3 --> C1
+    C1 --> C2
+    C2 --> C3
+    C3 --> C5
+
+    %% API to Services
+    C3 --> D1
+    C3 --> D2
+    C3 --> D3
+    C4 --> D4
+    C3 --> D5
+    C3 --> D6
+    C3 --> D7
+    C3 --> D8
+
+    %% Services to Models
+    D1 --> E1
+    D2 --> E2
+    D3 --> E3
+    D4 --> E4
+    D5 --> E3
+    D6 --> E6
+    D7 --> E5
+    D8 --> E7
+
+    %% Models to Database
+    E1 --> F1
+    E2 --> F2
+    E3 --> F3
+    E4 --> F4
+    E5 --> F5
+    E6 --> F6
+    E7 --> F7
+    E8 --> F8
+
+    %% External Service Integrations
+    B5 -.->|API Proxy| C3
+    C3 -.-> G1
+    D1 -.-> G2
+    D1 -.-> G3
+    D1 -.-> G4
+    C5 -.-> G5
+    D6 -.-> G2
+    D6 -.-> G3
+
+    %% Background Jobs
+    H1 --> H2
+    H1 --> H3
+    H1 --> H4
+    H2 --> E8
+    H4 --> D6
+
+    %% Hosting
+    B1 -.->|Deployed on| I1
+    C3 -.->|Deployed on| I2
+    F1 -.->|Hosted on| I3
+
+    %% Styling
+    classDef frontend fill:#3b82f6,stroke:#1e40af,color:#fff
+    classDef backend fill:#10b981,stroke:#059669,color:#fff
+    classDef database fill:#f59e0b,stroke:#d97706,color:#fff
+    classDef external fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    classDef jobs fill:#ef4444,stroke:#dc2626,color:#fff
+    classDef hosting fill:#6366f1,stroke:#4f46e5,color:#fff
+
+    class B1,B2,B3,B4,B5 frontend
+    class C1,C2,C3,C4,C5,D1,D2,D3,D4,D5,D6,D7,D8,E1,E2,E3,E4,E5,E6,E7,E8 backend
+    class F1,F2,F3,F4,F5,F6,F7,F8 database
+    class G1,G2,G3,G4,G5 external
+    class H1,H2,H3,H4 jobs
+    class I1,I2,I3 hosting

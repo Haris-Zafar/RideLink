@@ -14,23 +14,22 @@
 
 **Database Type**: MongoDB (NoSQL Document Database)  
 **ODM**: Mongoose 8.x  
-**Total Collections**: 7  
-**Estimated Storage (10K users)**: ~350 MB
+**Total Collections**: 8  
+**Estimated Storage (10K users)**: ~533 MB
 
 ### Collection Summary
 
-| Collection        | Purpose                | Estimated Docs | Avg Size | Total Size  |
-| ----------------- | ---------------------- | -------------- | -------- | ----------- |
-| **users**         | User profiles & auth   | 10,000         | 2 KB     | 20 MB       |
-| **rides**         | Posted ride listings   | 50,000         | 1.5 KB   | 75 MB       |
-| **bookings**      | Ride booking records   | 100,000        | 0.8 KB   | 80 MB       |
-| **messages**      | Chat messages          | 500,000        | 0.5 KB   | 250 MB      |
-| **reviews**       | User ratings & reviews | 80,000         | 0.6 KB   | 48 MB       |
-| **notifications** | In-app notifications   | 200,000        | 0.3 KB   | 60 MB       |
-| **reports**       | User reports (admin)   | 500            | 1 KB     | 0.5 MB      |
-| **Total**         | -                      | **940,500**    | -        | **~533 MB** |
-
-**Note**: With indexing overhead, total ~600 MB (fits in MongoDB Atlas M0 free tier 512 MB for first 6 months)
+| Collection             | Purpose                  | Estimated Docs | Avg Size | Total Size  |
+| ---------------------- | ------------------------ | -------------- | -------- | ----------- |
+| **users**              | User profiles & auth     | 10,000         | 2 KB     | 20 MB       |
+| **rides**              | Posted ride listings     | 50,000         | 1.5 KB   | 75 MB       |
+| **bookings**           | Ride booking records     | 100,000        | 0.8 KB   | 80 MB       |
+| **messages**           | Chat messages            | 500,000        | 0.5 KB   | 250 MB      |
+| **reviews**            | User ratings & reviews   | 80,000         | 0.6 KB   | 48 MB       |
+| **notifications**      | In-app notifications     | 200,000        | 0.3 KB   | 60 MB       |
+| **reports**            | User reports (admin)     | 500            | 1 KB     | 0.5 MB      |
+| **recurringschedules** | Recurring ride templates | 5,000          | 0.8 KB   | 4 MB        |
+| **Total**              | -                        | **945,500**    | -        | **~537 MB** |
 
 ---
 
@@ -82,160 +81,397 @@ const vehicleSchema = new mongoose.Schema(
   { _id: false }
 );
 
-const userSchema = new mongoose.Schema(
-  {
-    // Authentication
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
-      match: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.edu\.pk$/, // Only .edu.pk emails
-    },
-    password: {
-      type: String,
-      required: true,
-      minlength: 8,
-      select: false, // Don't return password in queries by default
-    },
-    phone: {
-      type: String,
-      required: true,
-      unique: true,
-      match: /^\+92[0-9]{10}$/, // Format: +92XXXXXXXXXX
-    },
-
-    // Profile
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-      minlength: 2,
-      maxlength: 100,
-    },
-    profilePhoto: {
-      type: String, // Cloudinary URL
-      default: null,
-    },
-    bio: {
-      type: String,
-      maxlength: 200,
-      trim: true,
-    },
-
-    // University Info
-    university: {
-      type: String,
-      required: true,
-      enum: ['LUMS', 'NUST', 'FAST', 'UET', 'GIKI', 'IBA', 'SZABIST', 'Other'],
-    },
-    studentId: {
-      type: String,
-      trim: true,
-      maxlength: 20,
-    },
-    department: {
-      type: String,
-      trim: true,
-      maxlength: 100,
-    },
-
-    // Location
-    homeNeighborhood: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: 100,
-    },
-    city: {
-      type: String,
-      required: true,
-      enum: [
-        'Lahore',
-        'Karachi',
-        'Islamabad',
-        'Rawalpindi',
-        'Faisalabad',
-        'Multan',
-        'Other',
-      ],
-      default: 'Lahore',
-    },
-
-    // Role & Permissions
-    role: {
-      type: String,
-      enum: ['passenger', 'driver', 'both', 'admin'],
-      default: 'passenger',
-    },
-
-    // Vehicle (only for drivers)
-    vehicle: {
-      type: vehicleSchema,
-      default: null,
-      required: function () {
-        return this.role === 'driver' || this.role === 'both';
-      },
-    },
-
-    // Verification Status
-    emailVerified: {
-      type: Boolean,
-      default: false,
-    },
-    phoneVerified: {
-      type: Boolean,
-      default: false,
-    },
-    isVerified: {
-      type: Boolean,
-      default: function () {
-        return this.emailVerified && this.phoneVerified && this.profilePhoto;
-      },
-    },
-
-    // Ratings
-    driverRating: {
-      average: { type: Number, default: 0, min: 0, max: 5 },
-      count: { type: Number, default: 0 },
-    },
-    passengerRating: {
-      average: { type: Number, default: 0, min: 0, max: 5 },
-      count: { type: Number, default: 0 },
-    },
-
-    // Activity Stats
-    ridesOffered: { type: Number, default: 0 },
-    ridesTaken: { type: Number, default: 0 },
-    totalEarnings: { type: Number, default: 0 }, // Fuel cost recovered
-    totalSavings: { type: Number, default: 0 }, // Money saved
-
-    // Account Status
-    status: {
-      type: String,
-      enum: ['active', 'suspended', 'banned'],
-      default: 'active',
-    },
-    suspendedUntil: { type: Date, default: null },
-
-    // Security
-    passwordResetToken: { type: String, select: false },
-    passwordResetExpires: { type: Date, select: false },
-    otpCode: { type: String, select: false },
-    otpExpires: { type: Date, select: false },
-
-    // Metadata
-    lastLogin: { type: Date },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now },
+const userSchema = new mongoose.Schema({
+  // Authentication
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+    match: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.edu\.pk$/, // Only .edu.pk emails
   },
-  {
-    timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
+  password: {
+    type: String,
+    required: true,
+    minlength: 8,
+    select: false, // Don't return password in queries by default
+  },
+  phone: {
+    type: String,
+    required: true,
+    unique: true,
+    match: /^\+92[0-9]{10}$/, // Format: +92XXXXXXXXXX
+  },
+
+  // Profile
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+    minlength: 2,
+    maxlength: 100,
+  },
+  profilePhoto: {
+    type: String, // Cloudinary URL
+    default: null,
+  },
+  bio: {
+    type: String,
+    maxlength: 200,
+    trim: true,
+  },
+
+  // University Info
+  university: {
+    type: String,
+    required: true,
+    enum: ['LUMS', 'NUST', 'FAST', 'UET', 'GIKI', 'IBA', 'SZABIST', 'Other'],
+  },
+  studentId: {
+    type: String,
+    trim: true,
+    maxlength: 20,
+  },
+  department: {
+    type: String,
+    trim: true,
+    maxlength: 100,
+  },
+
+  // Location
+  homeNeighborhood: 'DHA Phase 5',
+  city: 'Lahore',
+  role: 'both',
+});
+
+console.log('✅ Database seeded successfully');
+```
+
+### Production Deployment
+
+```javascript
+// migrations/001_create_indexes.js
+export async function up() {
+  // Create all indexes on production database
+  const collections = [
+    'users',
+    'rides',
+    'bookings',
+    'messages',
+    'reviews',
+    'notifications',
+    'reports',
+    'recurringschedules',
+  ];
+
+  for (const collection of collections) {
+    await db.collection(collection).createIndexes();
   }
-);
+}
+```
+
+---
+
+## Query Optimization Examples
+
+### Efficient Queries
+
+```javascript
+// ✅ GOOD: Uses compound index (origin, destination, date)
+const rides = await Ride.find({
+  origin: 'DHA Phase 5',
+  destination: 'LUMS University',
+  date: { $gte: new Date('2025-11-15') },
+})
+  .limit(20)
+  .lean(); // Use lean() for read-only queries
+
+// ✅ GOOD: Uses index (user, read, createdAt)
+const unreadNotifications = await Notification.find({
+  user: userId,
+  read: false,
+})
+  .sort({ createdAt: -1 })
+  .limit(10);
+
+// ❌ BAD: Full collection scan (no index on notes field)
+const rides = await Ride.find({
+  notes: /AC available/i,
+}); // Slow!
+
+// ✅ BETTER: Use text index
+const rides = await Ride.find({
+  $text: { $search: 'AC available' },
+});
+```
+
+---
+
+## Backup & Recovery Strategy
+
+### Automated Backups
+
+**MongoDB Atlas** (Free Tier):
+
+- Automated daily backups (retained for 7 days)
+- Point-in-time recovery within 7-day window
+
+### Manual Backup Commands
+
+```bash
+# Export entire database
+mongodump --uri="mongodb+srv://user:pass@cluster.mongodb.net/ridelink" --out=./backup
+
+# Export specific collection
+mongoexport --uri="mongodb+srv://..." --collection=users --out=users.json
+
+# Restore database
+mongorestore --uri="mongodb+srv://..." ./backup
+
+# Import collection
+mongoimport --uri="mongodb+srv://..." --collection=users --file=users.json
+```
+
+---
+
+## Data Retention Policy
+
+| Data Type       | Retention Period | Auto-Delete Method |
+| --------------- | ---------------- | ------------------ |
+| Messages        | 30 days          | TTL Index          |
+| Notifications   | 90 days          | TTL Index          |
+| Completed Rides | Indefinite       | Manual cleanup     |
+| Cancelled Rides | 1 year           | Cron job           |
+| User Accounts   | Until deletion   | Manual (GDPR)      |
+| Reports         | 2 years          | Manual archive     |
+
+---
+
+## Performance Benchmarks
+
+### Expected Query Performance (10K Users, 50K Rides)
+
+| Query Type                  | Target Time | Method                 |
+| --------------------------- | ----------- | ---------------------- |
+| User login (email lookup)   | < 10ms      | Unique index on email  |
+| Search rides (with filters) | < 100ms     | Compound index         |
+| Load chat messages          | < 50ms      | Compound index + limit |
+| Get user notifications      | < 30ms      | Compound index         |
+| Admin dashboard analytics   | < 500ms     | Aggregation pipeline   |
+
+### Index Size Estimates
+
+| Collection | Document Size | Index Size (est.) | Total  |
+| ---------- | ------------- | ----------------- | ------ |
+| users      | 20 MB         | 5 MB              | 25 MB  |
+| rides      | 75 MB         | 20 MB             | 95 MB  |
+| bookings   | 80 MB         | 15 MB             | 95 MB  |
+| messages   | 250 MB        | 30 MB             | 280 MB |
+
+**Total with Indexes**: ~600 MB (fits in Atlas M0 tier initially)
+
+---
+
+## GDPR Compliance Features
+
+### User Data Deletion
+
+```javascript
+// Method: Delete user and all related data
+userSchema.methods.deleteAccount = async function () {
+  const userId = this._id;
+
+  // Delete all related data
+  await Ride.deleteMany({ driver: userId });
+  await Booking.deleteMany({
+    $or: [{ passenger: userId }, { driver: userId }],
+  });
+  await Message.deleteMany({ $or: [{ sender: userId }, { receiver: userId }] });
+  await Review.deleteMany({
+    $or: [{ reviewer: userId }, { reviewedUser: userId }],
+  });
+  await Notification.deleteMany({ user: userId });
+  await Report.deleteMany({
+    $or: [{ reporter: userId }, { reportedUser: userId }],
+  });
+  await RecurringSchedule.deleteMany({ driver: userId });
+
+  // Delete user
+  await this.deleteOne();
+};
+```
+
+### Data Export
+
+```javascript
+// Export all user data (GDPR right to data portability)
+userSchema.methods.exportData = async function () {
+  const userId = this._id;
+
+  return {
+    profile: this.toJSON(),
+    rides: await Ride.find({ driver: userId }),
+    bookings: await Booking.find({ passenger: userId }),
+    reviews: await Review.find({ reviewer: userId }),
+    messages: await Message.find({ sender: userId }),
+  };
+};
+```
+
+---
+
+## Monitoring & Alerts
+
+### Metrics to Track
+
+1. **Collection Sizes**: Alert if any collection > 80% of free tier limit
+2. **Query Performance**: Alert if avg query time > 500ms
+3. **Failed Operations**: Track failed writes/reads
+4. **Connection Pool**: Monitor active connections
+
+### MongoDB Atlas Monitoring
+
+```javascript
+// Example: Check database size
+db.stats(); // Returns { dataSize, indexSize, storageSize }
+
+// Example: Explain query performance
+Ride.find({ origin: 'DHA' }).explain('executionStats');
+```
+
+---
+
+## Schema Evolution Plan
+
+### Adding New Fields (Non-Breaking)
+
+```javascript
+// Add new field with default value
+userSchema.add({
+  preferences: {
+    language: { type: String, default: 'en' },
+    notifications: { type: Boolean, default: true },
+  },
+});
+```
+
+### Removing Fields (Breaking Change)
+
+```javascript
+// Step 1: Mark as deprecated (keep for 1 version)
+userSchema.add({
+  oldField: { type: String, deprecated: true },
+});
+
+// Step 2: Remove in next major version
+// Use migration script to clean up old data
+```
+
+---
+
+## Conclusion
+
+This database schema is:
+
+- ✅ **Scalable**: Supports 10K+ users with proper indexing
+- ✅ **Performant**: < 100ms query times for critical operations
+- ✅ **Secure**: No exact addresses, sensitive fields protected
+- ✅ **Maintainable**: Clear relationships, validation rules
+- ✅ **GDPR Compliant**: User data export/deletion methods
+- ✅ **Cost-Effective**: Fits MongoDB Atlas free tier initially
+
+**Approval Status**: ✅ **READY FOR IMPLEMENTATION**
+
+---
+
+**Document Version**: 1.0  
+**Last Updated**: November 13, 2025  
+**Author**: Technical Architect Agent  
+**Next Document**: api-specification.md {
+type: String,
+required: true,
+trim: true,
+maxlength: 100
+},
+city: {
+type: String,
+required: true,
+enum: ['Lahore', 'Karachi', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Other'],
+default: 'Lahore'
+},
+
+// Role & Permissions
+role: {
+type: String,
+enum: ['passenger', 'driver', 'both', 'admin'],
+default: 'passenger'
+},
+
+// Vehicle (only for drivers)
+vehicle: {
+type: vehicleSchema,
+default: null,
+required: function() {
+return this.role === 'driver' || this.role === 'both';
+}
+},
+
+// Verification Status
+emailVerified: {
+type: Boolean,
+default: false
+},
+phoneVerified: {
+type: Boolean,
+default: false
+},
+isVerified: {
+type: Boolean,
+default: function() {
+return this.emailVerified && this.phoneVerified && this.profilePhoto;
+}
+},
+
+// Ratings
+driverRating: {
+average: { type: Number, default: 0, min: 0, max: 5 },
+count: { type: Number, default: 0 }
+},
+passengerRating: {
+average: { type: Number, default: 0, min: 0, max: 5 },
+count: { type: Number, default: 0 }
+},
+
+// Activity Stats
+ridesOffered: { type: Number, default: 0 },
+ridesTaken: { type: Number, default: 0 },
+totalEarnings: { type: Number, default: 0 }, // Fuel cost recovered
+totalSavings: { type: Number, default: 0 }, // Money saved
+
+// Account Status
+status: {
+type: String,
+enum: ['active', 'suspended', 'banned'],
+default: 'active'
+},
+suspendedUntil: { type: Date, default: null },
+
+// Security
+passwordResetToken: { type: String, select: false },
+passwordResetExpires: { type: Date, select: false },
+otpCode: { type: String, select: false },
+otpExpires: { type: Date, select: false },
+
+// Metadata
+lastLogin: { type: Date },
+createdAt: { type: Date, default: Date.now },
+updatedAt: { type: Date, default: Date.now }
+}, {
+timestamps: true,
+toJSON: { virtuals: true },
+toObject: { virtuals: true }
+});
 
 // Indexes
 userSchema.index({ email: 1 }, { unique: true });
@@ -246,47 +482,37 @@ userSchema.index({ status: 1 });
 userSchema.index({ 'vehicle.licensePlate': 1 }, { sparse: true });
 
 // Virtual: Full verification status
-userSchema.virtual('fullyVerified').get(function () {
-  return this.emailVerified && this.phoneVerified && this.profilePhoto !== null;
+userSchema.virtual('fullyVerified').get(function() {
+return this.emailVerified && this.phoneVerified && this.profilePhoto !== null;
 });
 
 // Pre-save: Hash password
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 12);
-  next();
+userSchema.pre('save', async function(next) {
+if (!this.isModified('password')) return next();
+this.password = await bcrypt.hash(this.password, 12);
+next();
 });
 
 // Method: Compare password
-userSchema.methods.comparePassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+userSchema.methods.comparePassword = async function(candidatePassword) {
+return await bcrypt.compare(candidatePassword, this.password);
 };
 
 // Method: Update rating
-userSchema.methods.updateRating = async function (type, newRating) {
-  const ratingField = type === 'driver' ? 'driverRating' : 'passengerRating';
-  const currentAvg = this[ratingField].average;
-  const currentCount = this[ratingField].count;
+userSchema.methods.updateRating = async function(type, newRating) {
+const ratingField = type === 'driver' ? 'driverRating' : 'passengerRating';
+const currentAvg = this[ratingField].average;
+const currentCount = this[ratingField].count;
 
-  this[ratingField].count = currentCount + 1;
-  this[ratingField].average =
-    (currentAvg * currentCount + newRating) / (currentCount + 1);
+this[ratingField].count = currentCount + 1;
+this[ratingField].average = (currentAvg \* currentCount + newRating) / (currentCount + 1);
 
-  await this.save();
+await this.save();
 };
 
 export default mongoose.model('User', userSchema);
-```
 
-### Indexes Explanation
-
-| Index                    | Type     | Purpose                  | Query Pattern                               |
-| ------------------------ | -------- | ------------------------ | ------------------------------------------- |
-| `email: 1`               | Unique   | Login, duplicate check   | `User.findOne({ email })`                   |
-| `phone: 1`               | Unique   | Phone verification       | `User.findOne({ phone })`                   |
-| `university: 1, role: 1` | Compound | Admin analytics          | `User.find({ university, role: 'driver' })` |
-| `homeNeighborhood: 1`    | Single   | Match drivers/passengers | `User.find({ homeNeighborhood })`           |
-| `status: 1`              | Single   | Filter active users      | `User.find({ status: 'active' })`           |
+````
 
 ### Sample Document
 
@@ -294,10 +520,10 @@ export default mongoose.model('User', userSchema);
 {
   "_id": "6554a1b2c3d4e5f6g7h8i9j0",
   "email": "ali.ahmed@lums.edu.pk",
-  "password": "$2a$12$abcd...", // Hashed
+  "password": "$2a$12$abcd...",
   "phone": "+923001234567",
   "name": "Ali Ahmed",
-  "profilePhoto": "https://res.cloudinary.com/ridelink/image/upload/v1234567890/profiles/ali.jpg",
+  "profilePhoto": "https://res.cloudinary.com/ridelink/profiles/ali.jpg",
   "bio": "CS major, prefer quiet rides",
   "university": "LUMS",
   "studentId": "25100123",
@@ -326,7 +552,7 @@ export default mongoose.model('User', userSchema);
   "createdAt": "2025-09-01T10:00:00Z",
   "updatedAt": "2025-11-13T08:30:00Z"
 }
-```
+````
 
 ---
 
@@ -472,7 +698,7 @@ const rideSchema = new mongoose.Schema(
 rideSchema.index({ origin: 1, destination: 1, date: 1 });
 rideSchema.index({ driver: 1, status: 1 });
 rideSchema.index({ departureDateTime: 1, status: 1 });
-rideSchema.index({ date: 1, time: 1, origin: 1 }); // Search optimization
+rideSchema.index({ date: 1, time: 1, origin: 1 });
 
 // Text index for origin/destination search
 rideSchema.index({ origin: 'text', destination: 'text' });
@@ -482,14 +708,7 @@ rideSchema.virtual('isFull').get(function () {
   return this.availableSeats === 0;
 });
 
-// Virtual: Can be cancelled (more than 30 mins before departure)
-rideSchema.virtual('canCancel').get(function () {
-  const now = new Date();
-  const minutesUntilDeparture = (this.departureDateTime - now) / (1000 * 60);
-  return minutesUntilDeparture > 30;
-});
-
-// Pre-save: Set departureDateTime from date + time
+// Pre-save: Set departureDateTime
 rideSchema.pre('save', function (next) {
   if (this.isModified('date') || this.isModified('time')) {
     const [hours, minutes] = this.time.split(':');
@@ -499,186 +718,12 @@ rideSchema.pre('save', function (next) {
   next();
 });
 
-// Method: Add passenger
-rideSchema.methods.addPassenger = async function (userId, bookingId) {
-  if (this.availableSeats <= 0) {
-    throw new Error('No available seats');
-  }
-
-  this.passengers.push({
-    user: userId,
-    bookingId: bookingId,
-    confirmedAt: new Date(),
-  });
-  this.availableSeats -= 1;
-
-  await this.save();
-};
-
-// Method: Remove passenger
-rideSchema.methods.removePassenger = async function (userId) {
-  const index = this.passengers.findIndex(
-    (p) => p.user.toString() === userId.toString()
-  );
-  if (index > -1) {
-    this.passengers.splice(index, 1);
-    this.availableSeats += 1;
-    await this.save();
-  }
-};
-
 export default mongoose.model('Ride', rideSchema);
 ```
 
-### Sample Document
-
-```json
-{
-  "_id": "6554a1b2c3d4e5f6g7h8i9j1",
-  "driver": "6554a1b2c3d4e5f6g7h8i9j0",
-  "origin": "DHA Phase 5",
-  "destination": "LUMS University",
-  "routeDetails": {
-    "distance": 12.5,
-    "duration": 25,
-    "polyline": "encodedPolylineString..."
-  },
-  "date": "2025-11-15T00:00:00Z",
-  "time": "08:30",
-  "departureDateTime": "2025-11-15T08:30:00Z",
-  "availableSeats": 2,
-  "totalSeats": 3,
-  "costPerPassenger": 150,
-  "notes": "Will wait max 5 minutes at pickup",
-  "preferences": {
-    "nonSmoking": true,
-    "acAvailable": true,
-    "musicAllowed": true,
-    "petsAllowed": false
-  },
-  "isRecurring": false,
-  "recurringScheduleId": null,
-  "status": "scheduled",
-  "passengers": [
-    {
-      "user": "6554a1b2c3d4e5f6g7h8i9j2",
-      "bookingId": "6554a1b2c3d4e5f6g7h8i9j3",
-      "confirmedAt": "2025-11-13T09:00:00Z"
-    }
-  ],
-  "viewCount": 45,
-  "createdAt": "2025-11-13T08:00:00Z",
-  "updatedAt": "2025-11-13T09:00:00Z"
-}
-```
-
 ---
 
-## 3. Recurring Schedules Collection
-
-**Collection Name**: `recurringschedules`  
-**Purpose**: Store templates for recurring rides
-
-### Schema Definition
-
-```javascript
-const recurringScheduleSchema = new mongoose.Schema(
-  {
-    driver: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-      index: true,
-    },
-
-    // Route (same as Ride)
-    origin: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    destination: {
-      type: String,
-      required: true,
-      default: 'University Campus',
-    },
-
-    // Schedule Pattern
-    daysOfWeek: [
-      {
-        type: String,
-        enum: [
-          'Monday',
-          'Tuesday',
-          'Wednesday',
-          'Thursday',
-          'Friday',
-          'Saturday',
-          'Sunday',
-        ],
-      },
-    ],
-    time: {
-      type: String,
-      required: true,
-      match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
-    },
-
-    // Ride Details
-    totalSeats: {
-      type: Number,
-      required: true,
-      min: 1,
-      max: 7,
-    },
-    costPerPassenger: {
-      type: Number,
-      required: true,
-    },
-    notes: String,
-    preferences: {
-      nonSmoking: Boolean,
-      acAvailable: Boolean,
-      musicAllowed: Boolean,
-      petsAllowed: Boolean,
-    },
-
-    // Status
-    active: {
-      type: Boolean,
-      default: true,
-    },
-    startDate: {
-      type: Date,
-      required: true,
-    },
-    endDate: {
-      type: Date, // null = indefinite
-    },
-
-    // Metadata
-    generatedRides: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Ride',
-      },
-    ],
-    lastGeneratedDate: Date,
-    createdAt: { type: Date, default: Date.now },
-  },
-  {
-    timestamps: true,
-  }
-);
-
-recurringScheduleSchema.index({ driver: 1, active: 1 });
-
-export default mongoose.model('RecurringSchedule', recurringScheduleSchema);
-```
-
----
-
-## 4. Bookings Collection
+## 3. Bookings Collection
 
 **Collection Name**: `bookings`  
 **Purpose**: Track ride booking requests and confirmations
@@ -754,10 +799,6 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       enum: ['passenger', 'driver', 'system'],
     },
-
-    // Metadata
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now },
   },
   {
     timestamps: true,
@@ -768,50 +809,13 @@ const bookingSchema = new mongoose.Schema(
 bookingSchema.index({ ride: 1, passenger: 1 }, { unique: true });
 bookingSchema.index({ passenger: 1, status: 1 });
 bookingSchema.index({ driver: 1, status: 1 });
-bookingSchema.index({ requestedAt: -1 });
-
-// Method: Confirm booking
-bookingSchema.methods.confirm = async function () {
-  this.status = 'confirmed';
-  this.confirmedAt = new Date();
-  await this.save();
-};
-
-// Method: Reject booking
-bookingSchema.methods.reject = async function (reason) {
-  this.status = 'rejected';
-  this.rejectionReason = reason;
-  this.rejectedAt = new Date();
-  await this.save();
-};
 
 export default mongoose.model('Booking', bookingSchema);
 ```
 
-### Sample Document
-
-```json
-{
-  "_id": "6554a1b2c3d4e5f6g7h8i9j3",
-  "ride": "6554a1b2c3d4e5f6g7h8i9j1",
-  "passenger": "6554a1b2c3d4e5f6g7h8i9j2",
-  "driver": "6554a1b2c3d4e5f6g7h8i9j0",
-  "status": "confirmed",
-  "requestMessage": "I'm from the same area, would love to join!",
-  "amountDue": 150,
-  "paymentStatus": "paid",
-  "paymentMethod": "cash",
-  "paidAt": "2025-11-15T09:00:00Z",
-  "requestedAt": "2025-11-13T08:45:00Z",
-  "confirmedAt": "2025-11-13T09:00:00Z",
-  "createdAt": "2025-11-13T08:45:00Z",
-  "updatedAt": "2025-11-15T09:00:00Z"
-}
-```
-
 ---
 
-## 5. Messages Collection
+## 4. Messages Collection
 
 **Collection Name**: `messages`  
 **Purpose**: Store chat messages between ride participants
@@ -865,35 +869,20 @@ const messageSchema = new mongoose.Schema(
   }
 );
 
-// Compound indexes for chat queries
+// Compound indexes
 messageSchema.index({ ride: 1, sentAt: -1 });
 messageSchema.index({ sender: 1, receiver: 1, sentAt: -1 });
-messageSchema.index({ receiver: 1, read: 1 }); // Unread messages
+messageSchema.index({ receiver: 1, read: 1 });
 
-// TTL Index: Auto-delete messages after 30 days
+// TTL Index: Auto-delete after 30 days
 messageSchema.index({ sentAt: 1 }, { expireAfterSeconds: 2592000 });
 
 export default mongoose.model('Message', messageSchema);
 ```
 
-### Sample Document
-
-```json
-{
-  "_id": "6554a1b2c3d4e5f6g7h8i9j4",
-  "ride": "6554a1b2c3d4e5f6g7h8i9j1",
-  "sender": "6554a1b2c3d4e5f6g7h8i9j2",
-  "receiver": "6554a1b2c3d4e5f6g7h8i9j0",
-  "text": "Hi! What time will you be at the pickup point?",
-  "read": true,
-  "readAt": "2025-11-13T09:05:00Z",
-  "sentAt": "2025-11-13T09:00:00Z"
-}
-```
-
 ---
 
-## 6. Reviews Collection
+## 5. Reviews Collection
 
 **Collection Name**: `reviews`  
 **Purpose**: Store ratings and reviews between users
@@ -956,7 +945,7 @@ const reviewSchema = new mongoose.Schema(
       },
     ],
 
-    // Response (optional)
+    // Response
     response: {
       type: String,
       maxlength: 300,
@@ -971,33 +960,16 @@ const reviewSchema = new mongoose.Schema(
   }
 );
 
-// Compound index: One review per ride per reviewer
+// Indexes
 reviewSchema.index({ ride: 1, reviewer: 1 }, { unique: true });
 reviewSchema.index({ reviewedUser: 1, createdAt: -1 });
-reviewSchema.index({ rating: 1 });
 
 export default mongoose.model('Review', reviewSchema);
 ```
 
-### Sample Document
-
-```json
-{
-  "_id": "6554a1b2c3d4e5f6g7h8i9j5",
-  "ride": "6554a1b2c3d4e5f6g7h8i9j1",
-  "reviewer": "6554a1b2c3d4e5f6g7h8i9j2",
-  "reviewedUser": "6554a1b2c3d4e5f6g7h8i9j0",
-  "reviewType": "driver",
-  "rating": 5,
-  "comment": "Great ride! Ali was on time and the car was clean.",
-  "tags": ["on-time", "friendly", "clean-vehicle"],
-  "createdAt": "2025-11-15T10:00:00Z"
-}
-```
-
 ---
 
-## 7. Notifications Collection
+## 6. Notifications Collection
 
 **Collection Name**: `notifications`  
 **Purpose**: Store in-app notifications
@@ -1005,38 +977,408 @@ export default mongoose.model('Review', reviewSchema);
 ### Schema Definition
 
 ```javascript
-const notificationSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-    index: true
-  },
+const notificationSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
 
-  // Notification Content
-  type: {
-    type: String,
-    enum: ['booking-request', 'booking-confirmed', 'booking-rejected',
-           'ride-cancelled', 'ride-reminder', 'message', 'review', 'system'],
-    required: true
-  },
-  title: {
-    type: String,
-    required: true,
-    maxlength: 100
-  },
-  message: {
-    type: String,
-    required: true,
-    maxlength: 300
-  },
+    // Notification Content
+    type: {
+      type: String,
+      enum: [
+        'booking-request',
+        'booking-confirmed',
+        'booking-rejected',
+        'ride-cancelled',
+        'ride-reminder',
+        'message',
+        'review',
+        'system',
+      ],
+      required: true,
+    },
+    title: {
+      type: String,
+      required: true,
+      maxlength: 100,
+    },
+    message: {
+      type: String,
+      required: true,
+      maxlength: 300,
+    },
 
-  // Related Data
-  relatedRide: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Ride'
+    // Related Data
+    relatedRide: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Ride',
+    },
+    relatedBooking: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Booking',
+    },
+    relatedUser: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+
+    // Status
+    read: {
+      type: Boolean,
+      default: false,
+    },
+    readAt: Date,
+
+    // Metadata
+    createdAt: {
+      type: Date,
+      default: Date.now,
+      index: true,
+    },
   },
-  relatedBooking: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref
+  {
+    timestamps: false,
+  }
+);
+
+// Indexes
+notificationSchema.index({ user: 1, read: 1, createdAt: -1 });
+
+// TTL Index: Auto-delete after 90 days
+notificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 7776000 });
+
+export default mongoose.model('Notification', notificationSchema);
+```
+
+---
+
+## 7. Reports Collection
+
+**Collection Name**: `reports`  
+**Purpose**: Store user reports for admin review
+
+### Schema Definition
+
+```javascript
+const reportSchema = new mongoose.Schema(
+  {
+    reporter: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    reportedUser: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
+    relatedRide: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Ride',
+    },
+
+    // Report Details
+    category: {
+      type: String,
+      enum: [
+        'no-show',
+        'harassment',
+        'unsafe-driving',
+        'fake-profile',
+        'other',
+      ],
+      required: true,
+    },
+    description: {
+      type: String,
+      required: true,
+      minlength: 50,
+      maxlength: 1000,
+    },
+    evidence: [
+      {
+        type: String, // Cloudinary URLs
+      },
+    ],
+
+    // Status
+    status: {
+      type: String,
+      enum: ['open', 'under-review', 'resolved', 'dismissed'],
+      default: 'open',
+      index: true,
+    },
+    priority: {
+      type: String,
+      enum: ['low', 'medium', 'high', 'critical'],
+      default: 'medium',
+    },
+
+    // Admin Actions
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    reviewedAt: Date,
+    adminNotes: {
+      type: String,
+      maxlength: 500,
+    },
+    actionTaken: {
+      type: String,
+      enum: ['none', 'warning', 'suspension', 'ban'],
+      default: 'none',
+    },
+
+    // Metadata
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Indexes
+reportSchema.index({ status: 1, priority: -1, createdAt: -1 });
+reportSchema.index({ reportedUser: 1 });
+
+export default mongoose.model('Report', reportSchema);
+```
+
+---
+
+## 8. Recurring Schedules Collection
+
+**Collection Name**: `recurringschedules`  
+**Purpose**: Store templates for recurring rides
+
+### Schema Definition
+
+```javascript
+const recurringScheduleSchema = new mongoose.Schema(
+  {
+    driver: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
+
+    // Route
+    origin: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    destination: {
+      type: String,
+      required: true,
+      default: 'University Campus',
+    },
+
+    // Schedule Pattern
+    daysOfWeek: [
+      {
+        type: String,
+        enum: [
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday',
+          'Friday',
+          'Saturday',
+          'Sunday',
+        ],
+      },
+    ],
+    time: {
+      type: String,
+      required: true,
+      match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
+    },
+
+    // Ride Details
+    totalSeats: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 7,
+    },
+    costPerPassenger: {
+      type: Number,
+      required: true,
+    },
+    notes: String,
+    preferences: {
+      nonSmoking: Boolean,
+      acAvailable: Boolean,
+      musicAllowed: Boolean,
+      petsAllowed: Boolean,
+    },
+
+    // Status
+    active: {
+      type: Boolean,
+      default: true,
+    },
+    startDate: {
+      type: Date,
+      required: true,
+    },
+    endDate: Date,
+
+    // Metadata
+    generatedRides: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Ride',
+      },
+    ],
+    lastGeneratedDate: Date,
+    createdAt: { type: Date, default: Date.now },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+recurringScheduleSchema.index({ driver: 1, active: 1 });
+
+export default mongoose.model('RecurringSchedule', recurringScheduleSchema);
+```
+
+---
+
+## Index Optimization Summary
+
+### Critical Indexes (Query Performance)
+
+| Collection    | Index                              | Type     | Use Case                   |
+| ------------- | ---------------------------------- | -------- | -------------------------- |
+| users         | email: 1                           | Unique   | Login, registration        |
+| users         | phone: 1                           | Unique   | Phone verification         |
+| rides         | origin: 1, destination: 1, date: 1 | Compound | Ride search                |
+| rides         | departureDateTime: 1, status: 1    | Compound | Upcoming rides query       |
+| bookings      | ride: 1, passenger: 1              | Compound | Prevent duplicate bookings |
+| messages      | ride: 1, sentAt: -1                | Compound | Chat history retrieval     |
+| notifications | user: 1, read: 1, createdAt: -1    | Compound | Unread notifications       |
+
+### TTL Indexes (Auto-Cleanup)
+
+| Collection    | TTL Duration | Purpose                       |
+| ------------- | ------------ | ----------------------------- |
+| messages      | 30 days      | Auto-delete old messages      |
+| notifications | 90 days      | Auto-delete old notifications |
+
+---
+
+## Data Relationships
+
+### Relationship Diagram
+
+```
+User (1) ────< (M) Ride
+  │
+  └──< (M) Booking ──> (1) Ride
+  │
+  └──< (M) Message ──> (1) Ride
+  │
+  └──< (M) Review ──> (1) Ride
+  │
+  └──< (M) Notification
+  │
+  └──< (M) Report (as reporter or reported)
+  │
+  └──< (M) RecurringSchedule ──> (M) Ride (generated)
+```
+
+---
+
+## Storage Estimates
+
+### Breakdown by Collection (10K Users)
+
+- **Users**: 10,000 × 2 KB = 20 MB
+- **Rides**: 50,000 × 1.5 KB = 75 MB
+- **Bookings**: 100,000 × 0.8 KB = 80 MB
+- **Messages**: 500,000 × 0.5 KB = 250 MB
+- **Reviews**: 80,000 × 0.6 KB = 48 MB
+- **Notifications**: 200,000 × 0.3 KB = 60 MB
+- **Reports**: 500 × 1 KB = 0.5 MB
+- **RecurringSchedules**: 5,000 × 0.8 KB = 4 MB
+
+**Total**: ~537 MB (with indexes: ~600 MB)
+
+**MongoDB Atlas Free Tier**: 512 MB → Will need upgrade after ~8,000 active users
+
+---
+
+## Validation Rules Summary
+
+### Email Validation
+
+- Format: `*.edu.pk` domain only
+- Regex: `/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.edu\.pk$/`
+
+### Phone Validation
+
+- Format: `+92XXXXXXXXXX` (Pakistan)
+- Regex: `/^\+92[0-9]{10}$/`
+
+### License Plate Validation
+
+- Format: `ABC-1234`
+- Regex: `/^[A-Z]{3}-[0-9]{4}$/`
+
+### Time Validation
+
+- Format: `HH:MM` (24-hour)
+- Regex: `/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/`
+
+---
+
+## Security Considerations
+
+1. **Password Hashing**: bcrypt with 12 salt rounds
+2. **Sensitive Fields**: `password`, `otpCode`, `passwordResetToken` → `select: false`
+3. **No Exact Addresses**: Only neighborhood-level location data
+4. **TTL Indexes**: Auto-delete old messages and notifications
+5. **Unique Constraints**: Prevent duplicate emails, phones, license plates
+
+---
+
+## Migration Strategy
+
+### Initial Setup (Development)
+
+```javascript
+// scripts/seedDatabase.js
+import mongoose from 'mongoose';
+import User from './models/User.js';
+import Ride from './models/Ride.js';
+
+// Connect to MongoDB
+await mongoose.connect(process.env.MONGODB_URI);
+
+// Create indexes
+await User.createIndexes();
+await Ride.createIndexes();
+// ... repeat for all models
+
+// Seed sample data
+const sampleUser = await User.create({
+  email: 'test@lums.edu.pk',
+  password: 'Test1234',
+  phone: '+923001234567',
+  name: 'Test User',
+  university: 'LUMS',
+  homeNeighborhood:
 ```
