@@ -1,0 +1,275 @@
+{
+  "agents": {
+    "01_business_analyst": {
+      "name": "Business Analyst",
+      "role": "Requirements and Business Analysis",
+      "status": "completed",
+      "description": "Analyzes business requirements, creates user stories, and defines project scope",
+      "capabilities": [
+        "Requirements gathering and documentation",
+        "User story creation",
+        "Feasibility analysis",
+        "Stakeholder communication"
+      ],
+      "output_directory": "AGENT_OUTPUTS/01_BUSINESS_ANALYST",
+      "completed_artifacts": [
+        "requirements.md",
+        "user-stories.md",
+        "feasibility-report.md"
+      ]
+    },
+    "02_technical_architect": {
+      "name": "Technical Architect",
+      "role": "System Architecture and Design",
+      "status": "completed",
+      "description": "Designs system architecture, selects technology stack, and creates technical specifications",
+      "capabilities": [
+        "Architecture design",
+        "Technology stack selection",
+        "Database schema design",
+        "API specification",
+        "System diagrams"
+      ],
+      "output_directory": "AGENT_OUTPUTS/02_TECHNICAL_ARCHITECT",
+      "completed_artifacts": [
+        "architecture.md",
+        "tech-stack.md",
+        "database-schema.md",
+        "api-specification.md",
+        "diagrams/"
+      ]
+    },
+    "03_project_manager": {
+      "name": "Project Manager",
+      "role": "Project Planning and Management",
+      "status": "completed",
+      "description": "Creates project plans, manages timeline, breaks down tasks, and tracks risks",
+      "capabilities": [
+        "Project planning",
+        "Task breakdown",
+        "Timeline management",
+        "Risk assessment",
+        "Progress tracking"
+      ],
+      "output_directory": "AGENT_OUTPUTS/03_PROJECT_MANAGER",
+      "completed_artifacts": [
+        "project-plan.md",
+        "tasks-breakdown.md",
+        "timeline.md",
+        "risks.md"
+      ]
+    },
+    "04_backend_developer": {
+      "name": "Backend Developer",
+      "role": "Backend Development",
+      "status": "active",
+      "description": "Implements backend services, APIs, database models, and business logic",
+      "capabilities": [
+        "Node.js/Express.js development",
+        "MongoDB/Mongoose implementation",
+        "RESTful API development",
+        "JWT authentication",
+        "Socket.io real-time features",
+        "Third-party integrations (Twilio, SendGrid, Cloudinary)",
+        "Middleware implementation",
+        "Error handling and logging"
+      ],
+      "output_directory": "backend",
+      "tasks": [
+        "Set up Express server structure",
+        "Implement authentication system (JWT)",
+        "Create Mongoose models",
+        "Build REST API endpoints",
+        "Implement Socket.io for real-time features",
+        "Integrate third-party services",
+        "Add validation and error handling",
+        "Implement cron jobs for recurring rides"
+      ]
+    },
+    "05_frontend_developer": {
+      "name": "Frontend Developer",
+      "role": "Frontend Development",
+      "status": "active",
+      "description": "Implements React components, UI/UX, state management, and client-side logic",
+      "capabilities": [
+        "React development",
+        "TailwindCSS styling",
+        "React Router implementation",
+        "State management (Context API + React Query)",
+        "Socket.io client integration",
+        "Form handling and validation",
+        "API integration",
+        "Responsive design"
+      ],
+      "output_directory": "frontend",
+      "tasks": [
+        "Set up React project with Vite",
+        "Create component structure",
+        "Implement routing",
+        "Build authentication flow",
+        "Create ride posting and search UI",
+        "Implement booking system UI",
+        "Add real-time chat interface",
+        "Build admin dashboard",
+        "Implement responsive design"
+      ]
+    },
+    "06_qa_engineer": {
+      "name": "QA Engineer",
+      "role": "Quality Assurance and Testing",
+      "status": "active",
+      "description": "Creates test plans, performs testing, and ensures quality standards",
+      "capabilities": [
+        "Test plan creation",
+        "Manual testing",
+        "Automated testing (unit, integration)",
+        "Security testing",
+        "Performance testing",
+        "Bug reporting and tracking"
+      ],
+      "output_directory": "AGENT_OUTPUTS/05_QA_ENGINEER",
+      "tasks": [
+        "Create comprehensive test cases",
+        "Perform manual testing",
+        "Write automated tests",
+        "Conduct security audit",
+        "Perform load testing",
+        "Document bugs and issues"
+      ]
+    },
+    "07_devops_engineer": {
+      "name": "DevOps Engineer",
+      "role": "Deployment and Infrastructure",
+      "status": "ready",
+      "description": "Handles deployment, CI/CD, monitoring, and infrastructure setup",
+      "capabilities": [
+        "Vercel deployment (frontend)",
+        "Railway deployment (backend)",
+        "MongoDB Atlas configuration",
+        "Environment variable management",
+        "CI/CD pipeline setup (GitHub Actions)",
+        "Monitoring setup (Sentry)",
+        "Backup and recovery procedures"
+      ],
+      "output_directory": "infrastructure",
+      "tasks": [
+        "Set up deployment pipelines",
+        "Configure environment variables",
+        "Set up MongoDB Atlas",
+        "Implement monitoring and logging",
+        "Create backup procedures",
+        "Configure domain and SSL"
+      ]
+    },
+    "08_documentation_specialist": {
+      "name": "Documentation Specialist",
+      "role": "Documentation and Knowledge Management",
+      "status": "active",
+      "description": "Creates and maintains all project documentation",
+      "capabilities": [
+        "API documentation",
+        "User guides",
+        "Developer documentation",
+        "README creation",
+        "Deployment guides",
+        "Architecture documentation"
+      ],
+      "output_directory": "AGENT_OUTPUTS/06_DOCUMENTATION",
+      "tasks": [
+        "Write comprehensive README",
+        "Document all API endpoints",
+        "Create user guides",
+        "Write deployment instructions",
+        "Document architecture decisions"
+      ]
+    },
+    "09_security_specialist": {
+      "name": "Security Specialist",
+      "role": "Security Analysis and Implementation",
+      "status": "ready",
+      "description": "Ensures security best practices and handles security audits",
+      "capabilities": [
+        "Security audit",
+        "OWASP Top 10 compliance",
+        "Authentication/authorization review",
+        "Input validation analysis",
+        "Rate limiting implementation",
+        "Security best practices enforcement"
+      ],
+      "output_directory": "AGENT_OUTPUTS/07_SECURITY",
+      "tasks": [
+        "Conduct security audit",
+        "Review authentication implementation",
+        "Check for common vulnerabilities",
+        "Ensure data encryption",
+        "Validate input sanitization"
+      ]
+    },
+    "10_research_agent": {
+      "name": "Research Agent",
+      "role": "Technical Research and Problem Solving",
+      "status": "ready",
+      "description": "Researches technical solutions, best practices, and troubleshoots issues",
+      "capabilities": [
+        "Technology research",
+        "Best practices investigation",
+        "Problem solving",
+        "Library/package evaluation",
+        "Performance optimization research"
+      ],
+      "output_directory": "AGENT_OUTPUTS/08_RESEARCH",
+      "tasks": [
+        "Research optimal solutions",
+        "Investigate issues",
+        "Evaluate alternatives",
+        "Find best practices"
+      ]
+    }
+  },
+  "workflow": {
+    "phase_1_completed": [
+      "01_business_analyst",
+      "02_technical_architect",
+      "03_project_manager"
+    ],
+    "phase_2_active": [
+      "04_backend_developer",
+      "05_frontend_developer",
+      "06_qa_engineer",
+      "08_documentation_specialist"
+    ],
+    "phase_3_ready": [
+      "07_devops_engineer",
+      "09_security_specialist",
+      "10_research_agent"
+    ]
+  },
+  "coordination": {
+    "development_sequence": [
+      {
+        "step": 1,
+        "name": "Backend Foundation",
+        "agents": ["04_backend_developer"],
+        "deliverables": ["Server setup", "Authentication", "Database models"]
+      },
+      {
+        "step": 2,
+        "name": "Parallel Development",
+        "agents": ["04_backend_developer", "05_frontend_developer"],
+        "deliverables": ["API endpoints", "React components", "Integration"]
+      },
+      {
+        "step": 3,
+        "name": "Testing & Documentation",
+        "agents": ["06_qa_engineer", "08_documentation_specialist"],
+        "deliverables": ["Test coverage", "Documentation"]
+      },
+      {
+        "step": 4,
+        "name": "Security & Deployment",
+        "agents": ["09_security_specialist", "07_devops_engineer"],
+        "deliverables": ["Security audit", "Production deployment"]
+      }
+    ]
+  }
+}
