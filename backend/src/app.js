@@ -28,6 +28,8 @@ app.use('/api/', limiter);
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/rides', require('./routes/rides'));
+app.use('/api/bookings', require('./routes/bookings'));
 
 // Health check
 app.get('/health', (req, res) => {
