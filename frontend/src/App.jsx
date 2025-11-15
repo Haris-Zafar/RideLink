@@ -10,6 +10,10 @@ import SearchRides from './pages/SearchRides';
 import MyRides from './pages/MyRides';
 import MyBookings from './pages/MyBookings';
 import RideDetails from './pages/RideDetails';
+import SubmitReview from './pages/SubmitReview';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminUsers from './pages/AdminUsers';
+import AdminReports from './pages/AdminReports';
 
 const queryClient = new QueryClient();
 
@@ -68,6 +72,38 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <MyBookings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/review/submit"
+                element={
+                  <ProtectedRoute>
+                    <SubmitReview />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute>
+                    <AdminUsers />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/reports"
+                element={
+                  <ProtectedRoute>
+                    <AdminReports />
                   </ProtectedRoute>
                 }
               />

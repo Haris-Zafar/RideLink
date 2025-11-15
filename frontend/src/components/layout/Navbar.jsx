@@ -29,6 +29,11 @@ const Navbar = () => {
                 <Link to="/bookings" className="hover:text-primary-600">
                   My Bookings
                 </Link>
+                {user?.role === 'admin' && (
+                  <Link to="/admin" className="hover:text-primary-600">
+                    Admin
+                  </Link>
+                )}
                 <div className="flex items-center space-x-3">
                   <span className="text-sm text-gray-600">
                     {user?.name}
