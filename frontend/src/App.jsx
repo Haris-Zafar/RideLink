@@ -5,6 +5,11 @@ import Navbar from './components/layout/Navbar';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import PostRide from './pages/PostRide';
+import SearchRides from './pages/SearchRides';
+import MyRides from './pages/MyRides';
+import MyBookings from './pages/MyBookings';
+import RideDetails from './pages/RideDetails';
 
 const queryClient = new QueryClient();
 
@@ -37,6 +42,32 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/rides/search" element={<SearchRides />} />
+              <Route path="/rides/:id" element={<RideDetails />} />
+              <Route
+                path="/rides/post"
+                element={
+                  <ProtectedRoute>
+                    <PostRide />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/rides/my-rides"
+                element={
+                  <ProtectedRoute>
+                    <MyRides />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/bookings"
+                element={
+                  <ProtectedRoute>
+                    <MyBookings />
                   </ProtectedRoute>
                 }
               />
